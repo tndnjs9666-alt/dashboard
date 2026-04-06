@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>플레이스 상품권 관리</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg: #07080f;
+  --surface: #0d0f1e;
+  --surface2: #131628;
+  --surface3: #1a1e35;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.12);
+  --blue: #4f8ef7;
+  --blue2: #7c5cfc;
+  --teal: #06d6a0;
+  --amber: #fbbf24;
+  --rose: #fb7185;
+  --orange: #f97316;
+  --text: #eef0f8;
+  --text2: #7880a4;
+  --text3: #3d4266;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content:''; position:fixed; top:-200px; left:-200px;
+  width:600px; height:600px;
+  background:radial-gradient(circle,rgba(79,142,247,0.08) 0%,transparent 70%);
+  pointer-events:none; z-index:0;
+}
+body::after {
+  content:''; position:fixed; bottom:-200px; right:-200px;
+  width:600px; height:600px;
+  background:radial-gradient(circle,rgba(124,92,252,0.08) 0%,transparent 70%);
+  pointer-events:none; z-index:0;
+}
+.container { position:relative; z-index:1; max-width:1500px; margin:0 auto; padding:32px; }
+
+/* 헤더 */
+.header { display:flex; justify-content:space-between; align-items:center; margin-bottom:32px; }
+.header-brand { display:flex; align-items:center; gap:16px; }
+.header-icon {
+  width:48px; height:48px;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  border-radius:14px; display:flex; align-items:center; justify-content:center;
+  font-size:22px; box-shadow:0 8px 32px rgba(79,142,247,0.3);
+}
+.header-text h1 {
+  font-size:22px; font-weight:900; letter-spacing:-0.8px;
+  background:linear-gradient(135deg,#fff 40%,var(--blue) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.header-text p { font-size:13px; color:var(--text2); margin-top:3px; }
+.live-badge {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(6,214,160,0.08); border:1px solid rgba(6,214,160,0.2);
+  padding:8px 16px; border-radius:50px; font-size:13px; color:var(--teal); font-weight:500;
+}
+.live-dot { width:7px; height:7px; border-radius:50%; background:var(--teal); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+
+/* 통계 카드 */
+.stats { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+.stat-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:20px; padding:20px 24px;
+  position:relative; overflow:hidden;
+  transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.3s;
+  animation:fadeUp 0.5s ease both;
+}
+.stat-card:nth-child(1){animation-delay:0.05s}
+.stat-card:nth-child(2){animation-delay:0.10s}
+.stat-card:nth-child(3){animation-delay:0.15s}
+.stat-card:nth-child(4){animation-delay:0.20s}
+.stat-card:hover { transform:translateY(-4px); }
+.stat-card.blue:hover  { box-shadow:0 20px 60px rgba(79,142,247,0.15); }
+.stat-card.teal:hover  { box-shadow:0 20px 60px rgba(6,214,160,0.15); }
+.stat-card.amber:hover { box-shadow:0 20px 60px rgba(251,191,36,0.15); }
+.stat-card.rose:hover  { box-shadow:0 20px 60px rgba(251,113,133,0.15); }
+.stat-glow {
+  position:absolute; top:-40px; right:-40px;
+  width:120px; height:120px; border-radius:50%; opacity:0.12; filter:blur(20px);
+}
+.blue .stat-glow{background:var(--blue)} .teal .stat-glow{background:var(--teal)}
+.amber .stat-glow{background:var(--amber)} .rose .stat-glow{background:var(--rose)}
+.stat-inner { display:flex; align-items:center; gap:16px; }
+.stat-icon-box {
+  width:44px; height:44px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; flex-shrink:0;
+}
+.blue .stat-icon-box{background:rgba(79,142,247,0.15)}
+.teal .stat-icon-box{background:rgba(6,214,160,0.15)}
+.amber .stat-icon-box{background:rgba(251,191,36,0.15)}
+.rose .stat-icon-box{background:rgba(251,113,133,0.15)}
+.stat-texts { flex:1; min-width:0; }
+.stat-label { font-size:11px; color:var(--text2); font-weight:600; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px; }
+.stat-value { font-size:24px; font-weight:900; font-family:'DM Mono',monospace; letter-spacing:-1px; line-height:1; white-space:nowrap; }
+.blue .stat-value{color:var(--blue)} .teal .stat-value{color:var(--teal)}
+.amber .stat-value{color:var(--amber)} .rose .stat-value{color:var(--rose)}
+.stat-unit { font-size:13px; font-weight:400; font-family:'Noto Sans KR',sans-serif; letter-spacing:0; color:var(--text2); }
+.stat-sub { font-size:11px; color:var(--text3); margin-top:4px; }
+
+/* 중간 행 */
+.row2 { display:grid; grid-template-columns:1fr 1fr 1.3fr; gap:16px; margin-bottom:20px; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:22px; }
+.card-title {
+  font-size:11px; font-weight:700; color:var(--text2);
+  text-transform:uppercase; letter-spacing:1px; margin-bottom:18px;
+  display:flex; align-items:center; gap:8px;
+}
+.ctdot { width:6px; height:6px; border-radius:50%; }
+
+/* 상태 현황 */
+.status-rows { display:flex; flex-direction:column; gap:12px; }
+.status-row { display:flex; flex-direction:column; gap:6px; }
+.status-row-top { display:flex; justify-content:space-between; align-items:center; }
+.status-row-label { font-size:13px; font-weight:500; display:flex; align-items:center; gap:8px; }
+.s-dot { width:8px; height:8px; border-radius:50%; }
+.status-row-count { font-size:13px; font-family:'DM Mono',monospace; color:var(--text2); }
+.bar-track { height:4px; background:var(--surface3); border-radius:4px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:4px; transition:width 1.2s cubic-bezier(0.4,0,0.2,1); width:0%; }
+
+/* 상품권 종류 */
+.type-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.type-item {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:14px; padding:14px 16px;
+  display:flex; align-items:center; gap:12px;
+  transition:border-color 0.2s,transform 0.2s;
+}
+.type-item:hover { border-color:var(--border2); transform:translateY(-2px); }
+.type-emoji { font-size:22px; flex-shrink:0; }
+.type-name { font-size:11px; color:var(--text2); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; }
+.type-count { font-size:22px; font-weight:900; font-family:'DM Mono',monospace; color:var(--blue); }
+
+/* 최근 신청 */
+.activity-list { display:flex; flex-direction:column; gap:10px; }
+.activity-item {
+  display:flex; align-items:center; gap:12px;
+  padding:11px 14px; background:var(--surface2); border-radius:12px;
+  transition:background 0.2s;
+}
+.activity-item:hover { background:var(--surface3); }
+.activity-avatar {
+  width:34px; height:34px; border-radius:10px;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; flex-shrink:0; color:#fff;
+}
+.activity-info { flex:1; min-width:0; }
+.activity-name { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.activity-meta { font-size:11px; color:var(--text2); margin-top:2px; }
+.activity-right { text-align:right; flex-shrink:0; }
+.activity-amount { font-size:13px; font-family:'DM Mono',monospace; color:var(--teal); white-space:nowrap; }
+.activity-status { font-size:10px; color:var(--text3); margin-top:2px; }
+
+/* ===== D-DAY 섹션 ===== */
+.dday-section {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:22px;
+  margin-bottom:20px;
+}
+.dday-header {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:18px;
+}
+.dday-title {
+  font-size:11px; font-weight:700; color:var(--text2);
+  text-transform:uppercase; letter-spacing:1px;
+  display:flex; align-items:center; gap:8px;
+}
+.dday-sub { font-size:12px; color:var(--text3); }
+.dday-list { display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; }
+.dday-list::-webkit-scrollbar { height:4px; }
+.dday-list::-webkit-scrollbar-track { background:var(--surface2); border-radius:4px; }
+.dday-list::-webkit-scrollbar-thumb { background:var(--border2); border-radius:4px; }
+.dday-item {
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:16px 20px;
+  min-width:200px;
+  flex-shrink:0;
+  transition:transform 0.2s, box-shadow 0.2s;
+  position:relative; overflow:hidden;
+}
+.dday-item:hover { transform:translateY(-2px); }
+.dday-item.urgent {
+  border-color:rgba(251,113,133,0.3);
+  background:rgba(251,113,133,0.05);
+}
+.dday-item.urgent:hover { box-shadow:0 8px 24px rgba(251,113,133,0.12); }
+.dday-item.warning {
+  border-color:rgba(251,191,36,0.3);
+  background:rgba(251,191,36,0.05);
+}
+.dday-item.warning:hover { box-shadow:0 8px 24px rgba(251,191,36,0.12); }
+.dday-item.safe {
+  border-color:rgba(6,214,160,0.2);
+}
+.dday-item.safe:hover { box-shadow:0 8px 24px rgba(6,214,160,0.08); }
+.dday-item.overdue {
+  border-color:rgba(249,115,22,0.4);
+  background:rgba(249,115,22,0.06);
+  animation:urgentPulse 2s infinite;
+}
+@keyframes urgentPulse {
+  0%,100%{border-color:rgba(249,115,22,0.4)}
+  50%{border-color:rgba(249,115,22,0.8)}
+}
+.dday-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:3px 10px; border-radius:20px;
+  font-size:13px; font-weight:900; font-family:'DM Mono',monospace;
+  margin-bottom:10px; letter-spacing:0;
+}
+.badge-urgent { background:rgba(251,113,133,0.15); color:var(--rose); }
+.badge-warning { background:rgba(251,191,36,0.15); color:var(--amber); }
+.badge-safe { background:rgba(6,214,160,0.12); color:var(--teal); }
+.badge-overdue { background:rgba(249,115,22,0.15); color:var(--orange); }
+.dday-name { font-size:14px; font-weight:700; margin-bottom:4px; }
+.dday-info { font-size:11px; color:var(--text2); margin-bottom:8px; }
+.dday-deadline {
+  font-size:11px; font-family:'DM Mono',monospace;
+  color:var(--text3); display:flex; align-items:center; gap:4px;
+}
+.dday-amount { font-size:12px; font-family:'DM Mono',monospace; color:var(--teal); margin-top:6px; }
+.dday-empty { color:var(--text3); font-size:13px; text-align:center; padding:20px; width:100%; }
+
+/* 테이블 */
+.table-card { background:var(--surface); border:1px solid var(--border); border-radius:20px; overflow:hidden; }
+.table-top {
+  padding:18px 24px;
+  display:flex; justify-content:space-between; align-items:center;
+  border-bottom:1px solid var(--border); flex-wrap:wrap; gap:12px;
+}
+.table-top-title { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:1px; }
+.table-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.filter-btn {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; padding:6px 12px;
+  color:var(--text2); font-size:12px;
+  font-family:'Noto Sans KR',sans-serif;
+  cursor:pointer; transition:all 0.2s; white-space:nowrap;
+}
+.filter-btn:hover,.filter-btn.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+.search-wrap { position:relative; }
+.search-wrap::before { content:'🔍'; position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:12px; }
+.search-input {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; padding:7px 12px 7px 30px;
+  color:var(--text); font-size:13px; font-family:'Noto Sans KR',sans-serif;
+  outline:none; width:180px; transition:border-color 0.2s,box-shadow 0.2s;
+}
+.search-input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(79,142,247,0.1); }
+.search-input::placeholder { color:var(--text3); }
+.table-scroll { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; min-width:1000px; }
+thead th {
+  padding:11px 18px; text-align:left;
+  font-size:11px; font-weight:700; color:var(--text3);
+  text-transform:uppercase; letter-spacing:0.8px;
+  background:var(--surface2); border-bottom:1px solid var(--border); white-space:nowrap;
+}
+tbody tr { border-bottom:1px solid var(--border); transition:background 0.15s; }
+tbody tr:last-child { border-bottom:none; }
+tbody tr:hover { background:var(--surface2); }
+tbody td { padding:13px 18px; font-size:13px; vertical-align:middle; white-space:nowrap; }
+.mono { font-family:'DM Mono',monospace; font-size:12px; color:var(--text2); }
+.name-cell { font-weight:600; }
+.amount-cell { font-family:'DM Mono',monospace; font-size:13px; font-weight:600; }
+.profit-cell { font-family:'DM Mono',monospace; font-size:13px; font-weight:600; color:var(--teal); }
+
+.pill {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:4px 10px; border-radius:20px;
+  font-size:11px; font-weight:700; white-space:nowrap;
+}
+.pill::before { content:''; width:5px; height:5px; border-radius:50%; }
+.pill-신청완료 { background:rgba(79,142,247,0.12); color:var(--blue); }
+.pill-신청완료::before { background:var(--blue); }
+.pill-진행중 { background:rgba(251,191,36,0.12); color:var(--amber); }
+.pill-진행중::before { background:var(--amber); }
+.pill-완료 { background:rgba(6,214,160,0.12); color:var(--teal); }
+.pill-완료::before { background:var(--teal); }
+.pill-취소 { background:rgba(251,113,133,0.12); color:var(--rose); }
+.pill-취소::before { background:var(--rose); }
+.pill-연체 { background:rgba(249,115,22,0.15); color:var(--orange); }
+.pill-연체::before { background:var(--orange); }
+
+.td-dday {
+  font-family:'DM Mono',monospace; font-size:12px; font-weight:700;
+}
+.td-dday.urgent { color:var(--rose); }
+.td-dday.warning { color:var(--amber); }
+.td-dday.safe { color:var(--teal); }
+.td-dday.overdue { color:var(--orange); }
+
+/* ===== 상세보기 모달 ===== */
+.modal-overlay {
+  display:none;
+  position:fixed; inset:0; z-index:1000;
+  background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(6px);
+  align-items:center; justify-content:center;
+}
+.modal-overlay.open { display:flex; }
+.modal {
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:24px;
+  padding:0;
+  width:480px; max-width:92vw;
+  box-shadow:0 40px 80px rgba(0,0,0,0.5);
+  animation:modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  overflow:hidden;
+}
+@keyframes modalIn {
+  from{opacity:0;transform:scale(0.92) translateY(16px)}
+  to{opacity:1;transform:scale(1) translateY(0)}
+}
+.modal-header {
+  padding:24px 24px 20px;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  border-bottom:1px solid var(--border);
+}
+.modal-avatar {
+  width:48px; height:48px; border-radius:14px;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; font-weight:700; color:#fff; flex-shrink:0;
+}
+.modal-name-wrap { flex:1; margin-left:14px; }
+.modal-name { font-size:18px; font-weight:900; letter-spacing:-0.5px; }
+.modal-sub { font-size:12px; color:var(--text2); margin-top:3px; }
+.modal-close {
+  width:32px; height:32px; border-radius:8px;
+  background:var(--surface2); border:1px solid var(--border);
+  color:var(--text2); font-size:16px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s; flex-shrink:0;
+}
+.modal-close:hover { background:var(--rose); border-color:var(--rose); color:#fff; }
+.modal-body { padding:20px 24px 24px; display:flex; flex-direction:column; gap:12px; }
+.modal-section-title {
+  font-size:10px; font-weight:700; color:var(--text3);
+  text-transform:uppercase; letter-spacing:1px;
+  margin-bottom:4px; margin-top:4px;
+}
+.modal-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 16px;
+  background:var(--surface2); border-radius:12px;
+}
+.modal-row-label { font-size:12px; color:var(--text2); font-weight:500; }
+.modal-row-value { font-size:13px; font-weight:600; font-family:'DM Mono',monospace; }
+.modal-row-value.green { color:var(--teal); }
+.modal-row-value.blue  { color:var(--blue); }
+.modal-pill-wrap { padding:16px 24px 20px; border-top:1px solid var(--border); display:flex; justify-content:center; }
+
+.name-cell { cursor:pointer; color:var(--blue); font-weight:700; }
+.name-cell:hover { text-decoration:underline; }
+
+.empty-state { text-align:center; padding:50px; color:var(--text3); }
+.empty-state .icon { font-size:36px; margin-bottom:10px; }
+.empty-state p { font-size:13px; }
+.pagination {
+  padding:14px 24px; display:flex; justify-content:flex-end; gap:6px;
+  border-top:1px solid var(--border);
+}
+.pg-btn {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; width:32px; height:32px;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--text2); font-size:12px; cursor:pointer; transition:all 0.2s;
+}
+.pg-btn:hover,.pg-btn.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+.footer { text-align:center; color:var(--text3); font-size:12px; margin-top:20px; padding-bottom:8px; }
+
+@keyframes fadeUp {
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 헤더 -->
+  <div class="header">
+    <div class="header-brand">
+      <div class="header-icon">🎫</div>
+      <div class="header-text">
+        <h1>플레이스 상품권 관리</h1>
+        <p id="today-date">로딩중...</p>
+      </div>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div> 실시간 연동</div>
+  </div>
+
+  <!-- 통계 카드 -->
+  <div class="stats">
+    <div class="stat-card blue">
+      <div class="stat-glow"></div>
+      <div class="stat-inner">
+        <div class="stat-icon-box">📋</div>
+        <div class="stat-texts">
+          <div class="stat-label">총 신청 건수</div>
+          <div class="stat-value"><span id="total-count">0</span><span class="stat-unit"> 건</span></div>
+          <div class="stat-sub">전체 누적</div>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card teal">
+      <div class="stat-glow"></div>
+      <div class="stat-inner">
+        <div class="stat-icon-box">📅</div>
+        <div class="stat-texts">
+          <div class="stat-label">오늘 신청</div>
+          <div class="stat-value"><span id="today-count">0</span><span class="stat-unit"> 건</span></div>
+          <div class="stat-sub">오늘 접수</div>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-glow"></div>
+      <div class="stat-inner">
+        <div class="stat-icon-box">💰</div>
+        <div class="stat-texts">
+          <div class="stat-label">총 매입금액</div>
+          <div class="stat-value" style="font-size:20px"><span id="total-amount">0</span><span class="stat-unit"> 원</span></div>
+          <div class="stat-sub">누적 매입</div>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card rose">
+      <div class="stat-glow"></div>
+      <div class="stat-inner">
+        <div class="stat-icon-box">📈</div>
+        <div class="stat-texts">
+          <div class="stat-label">총 수익</div>
+          <div class="stat-value" style="font-size:20px"><span id="total-profit">0</span><span class="stat-unit"> 원</span></div>
+          <div class="stat-sub">누적 수익</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 중간 행 -->
+  <div class="row2">
+    <!-- 상태별 현황 -->
+    <div class="card">
+      <div class="card-title"><div class="ctdot" style="background:var(--blue)"></div> 상태별 현황</div>
+      <div class="status-rows">
+        <div class="status-row">
+          <div class="status-row-top">
+            <div class="status-row-label"><div class="s-dot" style="background:var(--blue)"></div> 신청완료</div>
+            <div class="status-row-count" id="cnt-신청완료">0</div>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="background:var(--blue)" id="bar-신청완료"></div></div>
+        </div>
+        <div class="status-row">
+          <div class="status-row-top">
+            <div class="status-row-label"><div class="s-dot" style="background:var(--amber)"></div> 진행중</div>
+            <div class="status-row-count" id="cnt-진행중">0</div>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="background:var(--amber)" id="bar-진행중"></div></div>
+        </div>
+        <div class="status-row">
+          <div class="status-row-top">
+            <div class="status-row-label"><div class="s-dot" style="background:var(--teal)"></div> 완료</div>
+            <div class="status-row-count" id="cnt-완료">0</div>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="background:var(--teal)" id="bar-완료"></div></div>
+        </div>
+        <div class="status-row">
+          <div class="status-row-top">
+            <div class="status-row-label"><div class="s-dot" style="background:var(--rose)"></div> 취소</div>
+            <div class="status-row-count" id="cnt-취소">0</div>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="background:var(--rose)" id="bar-취소"></div></div>
+        </div>
+        <div class="status-row">
+          <div class="status-row-top">
+            <div class="status-row-label"><div class="s-dot" style="background:var(--orange)"></div> 연체</div>
+            <div class="status-row-count" id="cnt-연체">0</div>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="background:var(--orange)" id="bar-연체"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 신세계 상품권 현황 -->
+    <div class="card">
+      <div class="card-title"><div class="ctdot" style="background:var(--blue2)"></div> 신세계 상품권 현황</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:18px 20px;display:flex;align-items:center;gap:16px;">
+          <div style="font-size:32px;">🛍️</div>
+          <div>
+            <div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">총 거래 건수</div>
+            <div style="font-size:32px;font-weight:900;font-family:'DM Mono',monospace;color:var(--blue);" id="type-신세계-total">0</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
+            <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px;">진행중</div>
+            <div style="font-size:22px;font-weight:900;font-family:'DM Mono',monospace;color:var(--amber);" id="type-신세계-진행">0</div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
+            <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px;">완료</div>
+            <div style="font-size:22px;font-weight:900;font-family:'DM Mono',monospace;color:var(--teal);" id="type-신세계-완료">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 최근 신청 -->
+    <div class="card">
+      <div class="card-title"><div class="ctdot" style="background:var(--teal)"></div> 최근 신청</div>
+      <div class="activity-list" id="activity-list"></div>
+    </div>
+  </div>
+
+  <!-- D-DAY 섹션 -->
+  <div class="dday-section">
+    <div class="dday-header">
+      <div class="dday-title">
+        <div class="ctdot" style="background:var(--amber)"></div>
+        ⏰ 상품권 발송 D-DAY (판매일 기준)
+      </div>
+      <div class="dday-sub" id="dday-count">진행중인 건 없음</div>
+    </div>
+    <div class="dday-list" id="dday-list">
+      <div class="dday-empty">진행중인 거래가 없습니다</div>
+    </div>
+  </div>
+
+  <!-- 테이블 -->
+  <div class="table-card">
+    <div class="table-top">
+      <div class="table-top-title">📋 전체 신청 목록</div>
+      <div class="table-controls">
+        <button class="filter-btn active" onclick="setFilter('전체',this)">전체</button>
+        <button class="filter-btn" onclick="setFilter('신청완료',this)">신청완료</button>
+        <button class="filter-btn" onclick="setFilter('진행중',this)">진행중</button>
+        <button class="filter-btn" onclick="setFilter('완료',this)">완료</button>
+        <button class="filter-btn" onclick="setFilter('취소',this)">취소</button>
+        <button class="filter-btn" onclick="setFilter('연체',this)">연체</button>
+        <div class="search-wrap">
+          <input class="search-input" type="text" placeholder="이름 검색..." id="search-input" oninput="doFilter()">
+        </div>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>접수일시</th>
+            <th>성함</th>
+            <th>생년월일</th>
+            <th>핸드폰</th>
+            <th>지역</th>
+            <th>매입가</th>
+            <th>D-DAY</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  <div class="footer" id="footer">마지막 업데이트: —</div>
+</div>
+
+<!-- 상세보기 모달 -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-avatar" id="modal-avatar">?</div>
+      <div class="modal-name-wrap">
+        <div class="modal-name" id="modal-name">—</div>
+        <div class="modal-sub" id="modal-sub">—</div>
+      </div>
+      <div class="modal-close" onclick="closeModalDirect()">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section-title">거래 정보</div>
+      <div class="modal-row">
+        <div class="modal-row-label">🛍️ 상품권 종류</div>
+        <div class="modal-row-value blue" id="modal-type">—</div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-row-label">💰 수익</div>
+        <div class="modal-row-value green" id="modal-profit">—</div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-row-label">🏦 계좌번호</div>
+        <div class="modal-row-value" id="modal-account">—</div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-row-label">☕ 카페명</div>
+        <div class="modal-row-value" id="modal-cafe">—</div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-row-label">👥 업체수</div>
+        <div class="modal-row-value" id="modal-count">—</div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-row-label">📅 발송기한</div>
+        <div class="modal-row-value" id="modal-deadline">—</div>
+      </div>
+    </div>
+    <div class="modal-pill-wrap">
+      <span class="pill" id="modal-status-pill">—</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHEET_ID   = '1UHxPS0B52jp2qAZi21kGzcMGBb8SLE6_Zo2N6nva5lI';
+const API_KEY    = 'AIzaSyDNbG1dvO8-ecV2v319mQa02FOu8dSZpvM';
+const SHEET_NAME = '거래목록';
+
+// 샘플 데이터 (판매일 기준 D-day 테스트용)
+function makeSample() {
+  const today = new Date();
+  const ds = (offset) => {
+    const dt = new Date(today);
+    dt.setDate(dt.getDate() + offset);
+    return dt.toISOString().slice(0,10);
+  };
+  const acc = (offset) => ds(offset) + ' 10:00';
+  return [
+    ['1', acc(-9),  '홍길동',  '19850312','010-1234-5678','회사원','서울','신세계', ds(1), '500000','480000','20000','123-456-789','1','테스트카페','신청완료'],
+    ['2', acc(-7),  '김민수',  '19920705','010-9876-5432','자영업','부산','신세계', ds(3), '300000','285000','15000','987-654-321','2','카페닉',   '진행중'],
+    ['3', acc(-5),  '이지영',  '19951112','010-5555-1234','직장인','인천','신세계', ds(5), '200000','190000','10000','111-222-333','1','닉네임',   '진행중'],
+    ['4', acc(-12), '박준호',  '19880820','010-3333-7777','프리랜서','대구','신세계',ds(-2),'1000000','950000','50000','444-555-666','3','카페명', '연체'],
+    ['5', acc(-2),  '최수현',  '20000101','010-7777-2222','학생','광주','신세계',  ds(8), '150000','','','777-888-999','1','닉',        '신청완료'],
+    ['6', acc(-15), '정다은',  '19980315','010-2222-8888','회사원','서울','신세계', ds(-10),'700000','665000','35000','222-333-444','2','카페',    '완료'],
+    ['7', acc(-8),  '강하늘',  '19900610','010-4444-9999','자영업','제주','신세계', ds(0), '450000','427000','23000','333-111-222','1','하늘카페', '진행중'],
+  ];
+}
+
+let allRows = [], currentFilter = '전체', currentPage = 1;
+const PER_PAGE = 8;
+
+const now = new Date();
+document.getElementById('today-date').textContent =
+  now.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}) +
+  ' · ' + now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+
+// D-day 계산 — 판매일(r[8])과 오늘 비교
+function calcDday(deadlineStr) {
+  if (!deadlineStr) return null;
+  const dead = new Date(deadlineStr.slice(0,10));
+  if (isNaN(dead)) return null;
+  const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const deadMid  = new Date(dead.getFullYear(), dead.getMonth(), dead.getDate());
+  return Math.round((deadMid - todayMid) / (1000*60*60*24));
+}
+
+function ddayLabel(d) {
+  if (d === null) return '';
+  if (d > 0)  return `D-${d}`;
+  if (d === 0) return 'D-DAY';
+  return `D+${Math.abs(d)}`;
+}
+
+function ddayClass(d) {
+  if (d === null) return '';
+  if (d < 0)  return 'overdue';
+  if (d <= 2) return 'urgent';
+  if (d <= 5) return 'warning';
+  return 'safe';
+}
+
+function ddayBadgeClass(d) {
+  if (d === null) return '';
+  if (d < 0)  return 'badge-overdue';
+  if (d <= 2) return 'badge-urgent';
+  if (d <= 5) return 'badge-warning';
+  return 'badge-safe';
+}
+
+async function load() {
+  let rows = [];
+  if (SHEET_ID !== 'YOUR_SHEET_ID' && API_KEY !== 'YOUR_API_KEY') {
+    try {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
+      const res = await fetch(url);
+      const json = await res.json();
+      rows = (json.values||[]).slice(1);
+    } catch { rows = makeSample(); }
+  } else { rows = makeSample(); }
+  allRows = rows;
+  update(rows);
+  document.getElementById('footer').textContent =
+    '마지막 업데이트 · ' + new Date().toLocaleTimeString('ko-KR');
+}
+
+function update(rows) {
+  const todayStr = new Date().toISOString().slice(0,10);
+  let amt=0, profit=0, todayCnt=0;
+  const sc = {'신청완료':0,'진행중':0,'완료':0,'취소':0,'연체':0};
+  let ssTotal=0, ss진행=0, ss완료=0;
+
+  rows.forEach(r => {
+    const a = parseInt((r[9]||'').replace(/,/g,''))||0;
+    const p = parseInt((r[11]||'').replace(/,/g,''))||0;
+    amt += a; profit += p;
+    if ((r[1]||'').startsWith(todayStr)) todayCnt++;
+    const st = (r[15]||'').trim();
+    if (sc[st]!==undefined) sc[st]++; else sc['신청완료']++;
+    ssTotal++;
+    if (st==='진행중'||st==='신청완료'||st==='연체') ss진행++;
+    if (st==='완료') ss완료++;
+  });
+
+  document.getElementById('total-count').textContent  = rows.length.toLocaleString();
+  document.getElementById('today-count').textContent  = todayCnt;
+  document.getElementById('total-amount').textContent = amt.toLocaleString();
+  document.getElementById('total-profit').textContent = profit.toLocaleString();
+
+  const total = rows.length || 1;
+  Object.keys(sc).forEach(k => {
+    const c = document.getElementById('cnt-'+k);
+    const b = document.getElementById('bar-'+k);
+    if (c) c.textContent = sc[k];
+    if (b) setTimeout(()=>{ b.style.width=(sc[k]/total*100)+'%'; }, 300);
+  });
+  const el1 = document.getElementById('type-신세계-total');
+  const el2 = document.getElementById('type-신세계-진행');
+  const el3 = document.getElementById('type-신세계-완료');
+  if (el1) el1.textContent = ssTotal;
+  if (el2) el2.textContent = ss진행;
+  if (el3) el3.textContent = ss완료;
+
+  // 최근 3건
+  const recent = [...rows].reverse().slice(0,3);
+  document.getElementById('activity-list').innerHTML = recent.length
+    ? recent.map(r => {
+        const name = (r[2]||'').split('/')[0].trim();
+        const a = parseInt((r[9]||'').replace(/,/g,''))||0;
+        const st = (r[15]||'신청완료').trim();
+        return `<div class="activity-item">
+          <div class="activity-avatar">${name[0]||'?'}</div>
+          <div class="activity-info">
+            <div class="activity-name">${name}</div>
+            <div class="activity-meta">${(r[1]||'').slice(0,16)} · ${r[7]||''}</div>
+          </div>
+          <div class="activity-right">
+            <div class="activity-amount">${a?a.toLocaleString()+'원':'-'}</div>
+            <div class="activity-status">${st}</div>
+          </div>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">데이터 없음</div>';
+
+  // D-DAY 섹션 — 완료/취소 제외, 판매일(r[8]) 기준, D-day 순 정렬
+  const ddayRows = rows
+    .filter(r => { const st=(r[15]||'').trim(); return st!=='완료' && st!=='취소'; })
+    .map(r => ({ r, d: calcDday(r[8]) }))
+    .filter(x => x.d !== null)
+    .sort((a,b) => a.d - b.d);
+
+  const ddayList = document.getElementById('dday-list');
+  const ddayCnt  = document.getElementById('dday-count');
+
+  if (!ddayRows.length) {
+    ddayList.innerHTML = '<div class="dday-empty">진행중인 거래가 없습니다</div>';
+    ddayCnt.textContent = '진행중인 건 없음';
+  } else {
+    ddayCnt.textContent = `총 ${ddayRows.length}건 진행중`;
+    ddayList.innerHTML = ddayRows.map(({r, d}) => {
+      const name = (r[2]||'').split('/')[0].trim();
+      const amt2 = parseInt((r[9]||'').replace(/,/g,''))||0;
+      const st = (r[15]||'신청완료').trim();
+      const cls = ddayClass(d);
+      const badge = ddayBadgeClass(d);
+      const label = ddayLabel(d);
+      return `<div class="dday-item ${cls}">
+        <div class="dday-badge ${badge}">${label}</div>
+        <div class="dday-name">${name}</div>
+        <div class="dday-info">${r[7]||''} · ${st}</div>
+        <div class="dday-deadline">📅 발송기한 ${r[8]||'-'}</div>
+        <div class="dday-amount">${amt2?amt2.toLocaleString()+'원':''}</div>
+      </div>`;
+    }).join('');
+  }
+
+  doFilter();
+}
+
+function setFilter(f, btn) {
+  currentFilter = f; currentPage = 1;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  doFilter();
+}
+
+function doFilter() {
+  const q = (document.getElementById('search-input').value||'').trim().toLowerCase();
+  let filtered = allRows;
+  if (currentFilter !== '전체') filtered = filtered.filter(r=>(r[15]||'').trim()===currentFilter);
+  if (q) filtered = filtered.filter(r=>(r[2]||'').toLowerCase().includes(q));
+  renderTable(filtered);
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('table-body');
+  const start = (currentPage-1)*PER_PAGE;
+  const page  = rows.slice(start, start+PER_PAGE);
+
+  if (!page.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon">📭</div><p>데이터가 없습니다</p></div></td></tr>`;
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = page.map((r,i) => {
+    const st  = (r[15]||'신청완료').trim();
+    const amt = parseInt((r[9]||'').replace(/,/g,''))||0;
+    const name = (r[2]||'').split('/')[0].trim();
+    const d = calcDday(r[8]);
+    const ddayShow = (st==='완료'||st==='취소') ? '-' : (d!==null ? ddayLabel(d) : '-');
+    const ddayCls  = (st==='완료'||st==='취소') ? '' : ddayClass(d);
+    const rowIdx = allRows.indexOf(r);
+    return `<tr>
+      <td class="mono">${(r[1]||'').slice(0,16)}</td>
+      <td class="name-cell" onclick="openModal(${rowIdx})">${name}</td>
+      <td class="mono">${r[3]||''}</td>
+      <td class="mono">${r[4]||''}</td>
+      <td>${r[6]||''}</td>
+      <td class="amount-cell">${amt?amt.toLocaleString()+'원':'-'}</td>
+      <td class="td-dday ${ddayCls}">${ddayShow}</td>
+      <td><span class="pill pill-${st}">${st}</span></td>
+    </tr>`;
+  }).join('');
+
+  const pages = Math.ceil(rows.length/PER_PAGE);
+  const pg = document.getElementById('pagination');
+  if (pages<=1) { pg.innerHTML=''; return; }
+  pg.innerHTML = Array.from({length:pages},(_,i)=>
+    `<div class="pg-btn ${i+1===currentPage?'active':''}" onclick="goPage(${i+1})">${i+1}</div>`
+  ).join('');
+}
+
+function goPage(p) { currentPage=p; doFilter(); }
+
+function openModal(idx) {
+  const r = allRows[idx];
+  if (!r) return;
+  const name = (r[2]||'').split('/')[0].trim();
+  const pft  = parseInt((r[11]||'').replace(/,/g,''))||0;
+  const st   = (r[15]||'신청완료').trim();
+  document.getElementById('modal-avatar').textContent  = name[0]||'?';
+  document.getElementById('modal-name').textContent    = name;
+  document.getElementById('modal-sub').textContent     = (r[1]||'').slice(0,16) + ' 접수';
+  document.getElementById('modal-type').textContent    = r[7]||'-';
+  document.getElementById('modal-profit').textContent  = pft ? '+'+pft.toLocaleString()+'원' : '-';
+  document.getElementById('modal-account').textContent = r[12]||'-';
+  document.getElementById('modal-cafe').textContent    = r[14]||'-';
+  document.getElementById('modal-count').textContent   = (r[13]||'-') + '개';
+  document.getElementById('modal-deadline').textContent= r[8]||'-';
+  const pill = document.getElementById('modal-status-pill');
+  pill.textContent = st;
+  pill.className = `pill pill-${st}`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').classList.remove('open');
+}
+function closeModalDirect() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModalDirect();
+});
+
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>
