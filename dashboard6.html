@@ -254,14 +254,27 @@ body::after{content:'';position:fixed;bottom:-200px;right:-200px;width:600px;hei
     <div class="stat-card rose"><div class="stat-glow"></div><div class="stat-inner"><div class="stat-icon-box">📈</div><div class="stat-texts"><div class="stat-label">총 수익</div><div class="stat-value" style="font-size:14px"><span id="total-profit">0</span><span class="stat-unit">원</span></div><div class="stat-sub">과거+현재</div></div></div></div>
   </div>
   <div style="margin-bottom:14px;">
-    <div class="stat-card" style="border-radius:14px;background:var(--surface);border:1px solid rgba(124,92,252,0.2);">
-      <div class="stat-glow" style="background:var(--blue2)"></div>
-      <div class="stat-inner">
-        <div class="stat-icon-box" style="background:rgba(124,92,252,0.15);font-size:16px;">🏷️</div>
-        <div class="stat-texts">
-          <div class="stat-label" style="color:var(--blue2)">총 매출 (완료 기준)</div>
-          <div class="stat-value" style="font-size:18px;color:var(--blue2)"><span id="total-sales">0</span><span class="stat-unit" style="color:var(--text2)">원</span></div>
-          <div class="stat-sub">과거+완료 액면가</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="stat-card" style="border-radius:14px;background:var(--surface);border:1px solid rgba(124,92,252,0.2);">
+        <div class="stat-glow" style="background:var(--blue2)"></div>
+        <div class="stat-inner">
+          <div class="stat-icon-box" style="background:rgba(124,92,252,0.15);font-size:16px;">🏷️</div>
+          <div class="stat-texts">
+            <div class="stat-label" style="color:var(--blue2)">총 매출 (완료)</div>
+            <div class="stat-value" style="font-size:14px;color:var(--blue2)"><span id="total-sales">0</span><span class="stat-unit" style="color:var(--text2)">원</span></div>
+            <div class="stat-sub">과거+완료 액면가</div>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card" style="border-radius:14px;background:var(--surface);border:1px solid rgba(6,214,160,0.2);">
+        <div class="stat-glow" style="background:var(--teal)"></div>
+        <div class="stat-inner">
+          <div class="stat-icon-box" style="background:rgba(6,214,160,0.15);font-size:16px;">⏳</div>
+          <div class="stat-texts">
+            <div class="stat-label" style="color:var(--teal)">예정 매출 (진행중)</div>
+            <div class="stat-value" style="font-size:14px;color:var(--teal)"><span id="expected-sales">0</span><span class="stat-unit" style="color:var(--text2)">원</span></div>
+            <div class="stat-sub">완료시 총매출 반영</div>
+          </div>
         </div>
       </div>
     </div>
@@ -282,7 +295,16 @@ body::after{content:'';position:fixed;bottom:-200px;right:-200px;width:600px;hei
       <div class="card-title"><div class="ctdot" style="background:var(--blue2)"></div> 신세계 상품권 현황</div>
       <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;">
         <div style="font-size:26px;">🛍️</div>
-        <div><div style="font-size:9px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">총 거래 건수</div><div style="font-size:26px;font-weight:900;font-family:'DM Mono',monospace;color:var(--blue);" id="type-신세계-total">0</div></div>
+        <div style="display:flex;gap:20px;align-items:center;">
+          <div>
+            <div style="font-size:9px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">총 거래 건수</div>
+            <div style="font-size:26px;font-weight:900;font-family:'DM Mono',monospace;color:var(--blue);" id="type-신세계-total">0</div>
+          </div>
+          <div>
+            <div style="font-size:9px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">총 거래 인원</div>
+            <div style="font-size:26px;font-weight:900;font-family:'DM Mono',monospace;color:var(--blue2);" id="type-신세계-인원">0</div>
+          </div>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
         <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px;">진행중</div><div style="font-size:22px;font-weight:900;font-family:'DM Mono',monospace;color:var(--amber);" id="type-신세계-진행">0</div></div>
@@ -503,12 +525,14 @@ function update(rows){
   const pb={'진행중':0,'완료':0,'연체':0};
   let ssTotal=0,ss진행=0,ss완료=0;
 
+  let expectedSales=0;
   rows.forEach(r=>{
     const buyin=parseInt((r[9]||'').replace(/,/g,''))||0;
     const sales=parseInt((r[10]||'').replace(/,/g,''))||0;
     const st=(r[15]||'').trim();
     sheetBuyin+=buyin;
     if(st==='완료')sheetSales+=sales;
+    if(st==='진행중')expectedSales+=sales;
     if((r[1]||'').startsWith(todayStr))todayCnt++;
     if(sc[st]!==undefined)sc[st]++;else sc['신청완료']++;
     if(st==='완료')pb['완료']+=sales;
@@ -547,9 +571,18 @@ function update(rows){
   if(p진행중){p진행중.textContent='-'+pb['진행중'].toLocaleString()+'원';p진행중.style.color='var(--rose)';}
   if(p연체){p연체.textContent='-'+pb['연체'].toLocaleString()+'원';p연체.style.color='var(--rose)';}
 
-  document.getElementById('type-신세계-total').textContent=ssTotal;
+  // 총거래인원 (이름+생년월일 기준 중복제거, 과거기록 포함)
+  const personSet=new Set();
+  rows.forEach(r=>personSet.add((r[2]||'').trim()+'_'+(r[3]||'').trim()));
+  pastRecords.forEach(r=>personSet.add(r.name+'_'+r.birth));
+  const totalPersons=personSet.size;
+  const totalDeals=ssTotal+pastRecords.length;
+
+  document.getElementById('type-신세계-total').textContent=totalDeals;
+  document.getElementById('type-신세계-인원').textContent=totalPersons+'명';
   document.getElementById('type-신세계-진행').textContent=ss진행;
   document.getElementById('type-신세계-완료').textContent=ss완료;
+  document.getElementById('expected-sales').textContent=expectedSales.toLocaleString();
 
   const recent=[...rows].reverse().slice(0,3);
   document.getElementById('activity-list').innerHTML=recent.length
