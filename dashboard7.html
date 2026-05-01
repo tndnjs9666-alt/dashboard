@@ -731,32 +731,39 @@ function openDealModal(name,birth){
     const st=(r[15]||'').trim();
     if(st==='완료')totalSales+=parseInt((r[10]||'').replace(/,/g,''))||0;
   });
-  if(pastDeal){totalBuyin+=pastDeal.buyin||0;totalSales+=pastDeal.sales||0;}
+  const pastDealsForSum=pastRecords.filter(r=>r.name===name&&r.birth===birth);
+  pastDealsForSum.forEach(pd=>{totalBuyin+=pd.buyin||0;totalSales+=pd.sales||0;});
   const totalProfit=totalSales-totalBuyin;
 
   document.getElementById('deal-avatar').textContent=name[0]||'?';
   document.getElementById('deal-name').textContent=name;
-  document.getElementById('deal-sub').textContent=birth+' · 총 '+(sheetDeals.length+(pastDeal?1:0))+'건';
+  const pastDealsCount=pastRecords.filter(r=>r.name===name&&r.birth===birth).length;
+  document.getElementById('deal-sub').textContent=birth+' · 총 '+(sheetDeals.length+pastDealsCount)+'건';
   document.getElementById('deal-total-buyin').textContent=fmt(totalBuyin);
   document.getElementById('deal-total-sales').textContent=fmt(totalSales);
   const dp=document.getElementById('deal-total-profit');
   dp.textContent=(totalProfit>=0?'+':'')+fmt(Math.abs(totalProfit));
   dp.style.color=totalProfit>=0?'var(--teal)':'var(--rose)';
 
+  // 과거기록 여러 개 (날짜별 개별)
+  const pastDeals=pastRecords.filter(r=>r.name===name&&r.birth===birth);
   let html='';
-  if(pastDeal){
-    const pp=(pastDeal.sales||0)-(pastDeal.buyin||0);
-    html+=`<div class="deal-item">
+  pastDeals.forEach(pd=>{
+    const pp=(pd.sales||0)-(pd.buyin||0);
+    html+=`<div class="deal-item" id="pd-${pd.id}">
       <div class="deal-left">
-        <div class="deal-date">과거 기록</div>
-        <div class="deal-type">매입 ${fmt(pastDeal.buyin||0)} / 매출 ${fmt(pastDeal.sales||0)}</div>
-        <div class="deal-past-tag">과거</div>
+        <div class="deal-date">${pd.date||'과거 기록'} <span class="deal-past-tag" style="margin-left:4px;">과거</span></div>
+        <div class="deal-type" id="pd-type-${pd.id}">매입 ${fmt(pd.buyin||0)} / 매출 ${fmt(pd.sales||0)}</div>
       </div>
-      <div class="deal-right">
+      <div class="deal-right" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
         <div class="deal-amount" style="color:${pp>=0?'var(--teal)':'var(--rose)'}">${pp>=0?'+':''}${fmt(Math.abs(pp))}</div>
+        <div style="display:flex;gap:4px;">
+          <button onclick="editDealRecord('${pd.id}')" style="font-size:10px;padding:2px 7px;border-radius:6px;border:1px solid rgba(79,142,247,0.3);background:transparent;color:var(--blue);cursor:pointer;">수정</button>
+          <button onclick="deleteDealRecord('${pd.id}')" style="font-size:10px;padding:2px 7px;border-radius:6px;border:1px solid rgba(251,113,133,0.3);background:transparent;color:var(--rose);cursor:pointer;">삭제</button>
+        </div>
       </div>
     </div>`;
-  }
+  });
   sheetDeals.forEach(r=>{
     const st=(r[15]||'신청완료').trim();
     const buyin=parseInt((r[9]||'').replace(/,/g,''))||0;
@@ -815,15 +822,59 @@ function saveDealExtra(){
   if(!buyin&&!sales){alert('매입금 또는 매출금을 입력해주세요!');return;}
   const name=_dealCurrentName, birth=_dealCurrentBirth;
   if(!name||!birth)return;
-  const idx=pastRecords.findIndex(r=>r.name===name&&r.birth===birth);
-  if(idx>=0){
-    pastRecords[idx].buyin=(pastRecords[idx].buyin||0)+buyin;
-    pastRecords[idx].sales=(pastRecords[idx].sales||0)+sales;
-  } else {
-    pastRecords.push({id:Date.now().toString(),name,birth,buyin,sales});
-  }
+  // 날짜별 개별 레코드로 저장 (합산 안 함)
+  const today=new Date().toISOString().slice(0,10);
+  pastRecords.push({id:Date.now().toString(),name,birth,buyin,sales,date:today});
   savePastRecords(pastRecords);
   toggleDealForm();
+  openDealModal(name,birth);
+  update(allRows);
+}
+
+function editDealRecord(id){
+  const pd=pastRecords.find(r=>r.id===id);
+  if(!pd)return;
+  const item=document.getElementById('pd-'+id);
+  if(!item)return;
+  item.innerHTML=`
+    <div style="width:100%;display:flex;flex-direction:column;gap:8px;">
+      <div style="font-size:10px;color:var(--blue2);">${pd.date||'과거 기록'} <span class="deal-past-tag" style="margin-left:4px;">과거</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px;">매입금</div>
+          <input class="past-input" id="ed-buyin-${id}" value="${pd.buyin||0}" type="number" style="width:100%;"/>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px;">매출금</div>
+          <input class="past-input" id="ed-sales-${id}" value="${pd.sales||0}" type="number" style="width:100%;"/>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-past-save" onclick="updateDealRecord('${id}')" style="flex:1;font-size:11px;">저장</button>
+        <button class="btn-past-cancel" onclick="openDealModal('${pd.name}','${pd.birth}')" style="font-size:11px;">취소</button>
+      </div>
+    </div>`;
+}
+
+function updateDealRecord(id){
+  const idx=pastRecords.findIndex(r=>r.id===id);
+  if(idx<0)return;
+  const buyin=parseInt(document.getElementById('ed-buyin-'+id).value)||0;
+  const sales=parseInt(document.getElementById('ed-sales-'+id).value)||0;
+  const {name,birth,date}=pastRecords[idx];
+  pastRecords[idx]={id,name,birth,buyin,sales,date};
+  savePastRecords(pastRecords);
+  openDealModal(name,birth);
+  update(allRows);
+}
+
+function deleteDealRecord(id){
+  if(!confirm('이 과거 기록을 삭제하시겠습니까?'))return;
+  const r=pastRecords.find(x=>x.id===id);
+  if(!r)return;
+  const {name,birth}=r;
+  pastRecords=pastRecords.filter(x=>x.id!==id);
+  savePastRecords(pastRecords);
   openDealModal(name,birth);
   update(allRows);
 }
